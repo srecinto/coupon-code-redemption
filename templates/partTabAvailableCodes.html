@@ -1,0 +1,27 @@
+<div style="width: 300px;">
+    {% if paging_info.total_rows > 0 %}
+    <div class="divTable blueTable">
+        <div class="divTableHeading">
+            <div class="divTableRow">
+                <div class="divTableHead">Product Name</div>
+                <div class="divTableHead">Code</div>
+            </div>
+        </div>
+        <div class="divTableBody">
+            {% for unused_code in unused_codes %}
+            <div class="divTableRow">
+                <div class="divTableCell">{{unused_code.productRef}}</div>
+                <div class="divTableCell">{{unused_code.redeemCode}}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="blueTable outerTableFooter">
+        <div class="tableFootStyle">
+            <div class="links"><a href="#">&laquo;</a> <a class="active" href="#">1</a> <a href="#">2</a> <a href="#">3</a> <a href="#">4</a> <a href="#">&raquo;</a></div>
+        </div>
+    </div>
+    {% else %}
+        No codes are currently available.
+    {% endif %}
+</div>

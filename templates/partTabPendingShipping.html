@@ -1,0 +1,82 @@
+<script>
+    function setTracking(redeemCode) {
+        console.log("setTracking(redeemCode)");
+        var tracking = prompt("Enter the tracking info for code: " + redeemCode);
+        console.log("Tracking: " + tracking);
+
+        $.ajax({
+            url: "/admin/updateTracking/" + redeemCode + "/" + tracking,
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: null,
+            xhrFields: { withCredentials: true },
+            crossDomain: true,
+            success: data => {
+                console.log(data);
+                var jsonResponse = JSON.parse(data);
+                if(jsonResponse.status == "SUCCESS"){
+                    alert(jsonResponse.message);
+                    location.href = "/admin";
+                } else {
+                    alert(jsonResponse.message);
+                }
+            }
+        });
+    }
+</script>
+<div style="width: 100%;">
+    {% if paging_info.total_rows > 0 %}
+    <div><a href="/admin/exportall/pending">Export</a></div>
+    <div class="divTable blueTable">
+        <div class="divTableHeading">
+            <div class="divTableRow">
+                <div class="divTableHead">Product Name</div>
+                <div class="divTableHead">Code</div>
+                <div class="divTableHead">First Name</div>
+                <div class="divTableHead">Last Name</div>
+                <div class="divTableHead">Address 1</div>
+                <div class="divTableHead">Address 2</div>
+                <div class="divTableHead">City</div>
+                <div class="divTableHead">State</div>
+                <div class="divTableHead">Postal Code</div>
+                <div class="divTableHead">Phone</div>
+                <div class="divTableHead">Email</div>
+                <div class="divTableHead">Tracking</div>
+                <div class="divTableHead">Created</div>
+                <div class="divTableHead">Updated</div>
+                <div class="divTableHead">Action</div>
+            </div>
+        </div>
+        <div class="divTableBody">
+            {% for pending_shipping_item in pending_shipping_items %}
+            <div class="divTableRow">
+                <div class="divTableCell">{{pending_shipping_item.productRef}}</div>
+                <div class="divTableCell">{{pending_shipping_item.redeemCode}}</div>
+                <div class="divTableCell">{{pending_shipping_item.firstName}}</div>
+                <div class="divTableCell">{{pending_shipping_item.lastName}}</div>
+                <div class="divTableCell">{{pending_shipping_item.address1}}</div>
+                <div class="divTableCell">{{pending_shipping_item.address2}}</div>
+                <div class="divTableCell">{{pending_shipping_item.city}}</div>
+                <div class="divTableCell">{{pending_shipping_item.state}}</div>
+                <div class="divTableCell">{{pending_shipping_item.postalCode}}</div>
+                <div class="divTableCell">{{pending_shipping_item.phone}}</div>
+                <div class="divTableCell">{{pending_shipping_item.email}}</div>
+                <div class="divTableCell">{{pending_shipping_item.tracking}}</div>
+                <div class="divTableCell">{{pending_shipping_item.created}}</div>
+                <div class="divTableCell">{{pending_shipping_item.updated}}</div>
+                <div class="divTableCell">
+                    <input type="button" value="Set Tracking" onclick="setTracking('{{pending_shipping_item.redeemCode}}')" />
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="blueTable outerTableFooter">
+        <div class="tableFootStyle">
+            <div class="links"><a href="#">&laquo;</a> <a class="active" href="#">1</a> <a href="#">2</a> <a href="#">3</a> <a href="#">4</a> <a href="#">&raquo;</a></div>
+        </div>
+    </div>
+    {% else %}
+        No items are ready to ship currently.
+    {% endif %}
+</div>

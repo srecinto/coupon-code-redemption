@@ -1,0 +1,195 @@
+<html>
+    <head>
+        <title>Groupon Redeem From</title>
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+        <script
+            src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+            crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+        <style>
+            body{
+                background-color: #2bb673;
+                padding: 0px;
+                margin: 0px;
+            }
+            /* Style the video: 100% width and height to cover the entire window */
+            #smokeyBG {
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                min-width: 100%;
+                min-height: 100%;
+                filter:opacity(60%);
+                transform: translateX(10%) translateY(40%);
+            }
+
+            .logo {
+                width: 40%;
+                height: auto;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .content {
+                position: fixed;
+                top: 0;
+                background: rgba(0, 0, 0, 0.5);
+                color: #f1f1f1;
+                width: 400px;
+                padding: 20px;
+                margin: 5% 35% auto;
+            }
+
+            form {
+                overflow: hidden;
+            }
+
+            label {
+                float: left;
+                width: 120px;
+                margin: 3px;
+                padding-right: 24px;
+            }
+
+            input, select {
+                float: left;
+                margin: 3px;
+                width: calc(100% - 180px);
+            }
+
+            #redeemButton {
+                height: 20px;
+                margin: 10px 10px;
+                width: 90%;
+            }
+        </style>
+        <script>
+            //<![CDATA[
+            $(document).ready(function() {
+                console.log("Ready!!!");
+
+                $("#redeemButton").on("click", handleRedeemSubmit);
+
+            });
+
+            function handleRedeemSubmit() {
+                console.log("handleRedeemSubmit()");
+                var jsonData = objectifyForm($("#redemptionForm").serializeArray());
+                var stringJsonData = JSON.stringify(jsonData);
+                console.log("stringJsonData: " + stringJsonData);
+
+                $.ajax({
+                    url: "/redeemCode",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    data: stringJsonData,
+                    xhrFields: { withCredentials: true },
+                    crossDomain: true,
+                    success: data => {
+                        console.log(data);
+                        var jsonResponse = JSON.parse(data);
+                        if(jsonResponse.status == "SUCCESS"){
+                            alert(jsonResponse.message);
+                        } else {
+                            alert(jsonResponse.message);
+                        }
+                    }
+                });
+
+                //$("#redemptionForm").submit();
+            }
+
+            function objectifyForm(formArray) {//serialize data function
+                console.log(objectifyForm);
+                var returnArray = {};
+                for (var i = 0; i < formArray.length; i++){
+                    returnArray[formArray[i]['name']] = formArray[i]['value'];
+                }
+                return returnArray;
+            }
+
+
+            //]]>
+        </script>
+    </head>
+    <body>
+        <!-- video autoplay muted loop id="smokeyBG">
+            <source src="/vid/smokey_bg_slow1.mp4" type="video/mp4">
+        </video -->
+        <div class="content">
+            <img class="logo" src="/img/logo_solid.png" alt="CBD Chicago" />
+            <form id="redemptionForm" name="redemptionForm" action="/redeemCode" method="POST">
+                <h1>Groupon Redemption Form</h1>
+                <label for="redeemCode">REDEEM CODE:</label><input id="redeemCode" name="redeemCode" type="text" />
+                <label for="firstName">First Name:</label><input id="firstName" name="firstName" type="text" />
+                <label for="lastName">Last Name:</label><input id="lastName" name="lastName" type="text" />
+                <label for="address1">Address Line 1:</label><input id="address1" name="address1" type="text" />
+                <label for="address2">Address Line 2:</label><input id="address2" name="address2" type="text" />
+                <label for="city">City:</label><input id="city" name="city" type="text" />
+                <label for="state">State:</label>
+                <select name="state">
+                	<option value="AL">Alabama</option>
+                	<option value="AK">Alaska</option>
+                	<option value="AZ">Arizona</option>
+                	<option value="AR">Arkansas</option>
+                	<option value="CA">California</option>
+                	<option value="CO">Colorado</option>
+                	<option value="CT">Connecticut</option>
+                	<option value="DE">Delaware</option>
+                	<option value="DC">District Of Columbia</option>
+                	<option value="FL">Florida</option>
+                	<option value="GA">Georgia</option>
+                	<option value="HI">Hawaii</option>
+                	<option value="ID">Idaho</option>
+                	<option value="IL">Illinois</option>
+                	<option value="IN">Indiana</option>
+                	<option value="IA">Iowa</option>
+                	<option value="KS">Kansas</option>
+                	<option value="KY">Kentucky</option>
+                	<option value="LA">Louisiana</option>
+                	<option value="ME">Maine</option>
+                	<option value="MD">Maryland</option>
+                	<option value="MA">Massachusetts</option>
+                	<option value="MI">Michigan</option>
+                	<option value="MN">Minnesota</option>
+                	<option value="MS">Mississippi</option>
+                	<option value="MO">Missouri</option>
+                	<option value="MT">Montana</option>
+                	<option value="NE">Nebraska</option>
+                	<option value="NV">Nevada</option>
+                	<option value="NH">New Hampshire</option>
+                	<option value="NJ">New Jersey</option>
+                	<option value="NM">New Mexico</option>
+                	<option value="NY">New York</option>
+                	<option value="NC">North Carolina</option>
+                	<option value="ND">North Dakota</option>
+                	<option value="OH">Ohio</option>
+                	<option value="OK">Oklahoma</option>
+                	<option value="OR">Oregon</option>
+                	<option value="PA">Pennsylvania</option>
+                	<option value="RI">Rhode Island</option>
+                	<option value="SC">South Carolina</option>
+                	<option value="SD">South Dakota</option>
+                	<option value="TN">Tennessee</option>
+                	<option value="TX">Texas</option>
+                	<option value="UT">Utah</option>
+                	<option value="VT">Vermont</option>
+                	<option value="VA">Virginia</option>
+                	<option value="WA">Washington</option>
+                	<option value="WV">West Virginia</option>
+                	<option value="WI">Wisconsin</option>
+                	<option value="WY">Wyoming</option>
+                </select>
+                <label for="postalCode">ZIP Code:</label><input id="postalCode" name="postalCode" type="text" />
+                <label for="phone">Phone Number:</label><input id="phone" name="phone" type="text" />
+                <label for="email">E-Mail Address:</label><input id="email" name="email" type="text" />
+                <input type="button" id="redeemButton" value="Redeem Code">
+            </form>
+        </div>
+    </body>
+</html>

@@ -6,6 +6,7 @@ import csv
 import io
 
 from flask import Flask, request, send_from_directory, redirect, make_response, render_template, Response
+from flask_sslify import SSLify
 from werkzeug import secure_filename
 from email.utils import parseaddr
 from utils.db import RedemptionCodeDB
@@ -14,9 +15,11 @@ from utils.db import RedemptionCodeDB
 GLOBAL VARIABLES ########################################################################################################
 """
 app = Flask(__name__)
+app.debug = False
 app.config.update({
     "SECRET_KEY": "6w_#w*~AVts3!*yd&C]jP0(x_1ssd]MVgzfAw8%fF+c@|ih0s1H&yZQC&-u~O[--"  # For the session
 })
+sslify = SSLify(app, permanent=True, subdomains=True)
 
 
 """

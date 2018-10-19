@@ -1,14 +1,25 @@
-import sqlite3
+import os
+import psycopg2
+import psycopg2.extras
+import json
 
 
 class RedemptionCodeDB:
 
-    DB_FILE = None
+    DATABASE_CONFIG = {}
 
-    def __init__(self, db_file_path_and_name):
+    def __init__(self):
         print("RedemptionCodeDB.__init__")
-        print("db_file_path_and_name: {0}".format(db_file_path_and_name))
-        self.DB_FILE = db_file_path_and_name
+
+        self.DATABASE_CONFIG = {
+            "host": os.environ['DATABASE_HOST'],
+            "database": os.environ['DATABASE_NAME'],
+            "user": os.environ['DATABASE_USER'],
+            "password": os.environ['DATABASE_PASSWORD'],
+            "sslmode": "require"
+        }
+
+        print("DATABASE_CONFIG: {0}".format(json.dumps(self.DATABASE_CONFIG, indent=4, sort_keys=True)))
 
     def dict_factory(self, cursor, row):
         d = {}
@@ -18,8 +29,8 @@ class RedemptionCodeDB:
 
     def get_connection(self):
         print("get_connection()")
-        conn = sqlite3.connect(self.DB_FILE)
-        conn.row_factory = self.dict_factory
+        conn = psycopg2.connect(**self.DATABASE_CONFIG)
+        #conn.row_factory = self.dict_factory
 
         return conn
 
@@ -32,11 +43,11 @@ class RedemptionCodeDB:
         print("delete_redemption_code()")
         result = "SUCCESS"
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         params = (
             redemption_code,
         )
-        cur.execute("delete from redemption_code where redeemCode=?;", params)
+        cur.execute("""delete from redemption_code where "redeemCode"=%s;""", params)
         self.commit_close_connection(conn)
 
         return result
@@ -44,13 +55,13 @@ class RedemptionCodeDB:
     def create_redemption_code(self, redemption_code, product_ref):
         print("create_redemption_code()")
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         params = (
             redemption_code,
             product_ref,
         )
-        cur.execute("insert into redemption_code (redeemCode, productRef) values (?, ?);", params)
-        cur.execute("select * from redemption_code where redeemCode=?;", (redemption_code,))
+        cur.execute("""insert into redemption_code ("redeemCode", "productRef") values (%s, %s);""", params)
+        cur.execute("""select * from redemption_code where "redeemCode"=%s;""", (redemption_code,))
 
         result = cur.fetchone()
 
@@ -61,7 +72,7 @@ class RedemptionCodeDB:
     def update_redemption_code(self, redemption_code_object):
         print("update_redemption_code()")
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         params = (
             redemption_code_object["productRef"],
             redemption_code_object["firstName"],
@@ -79,22 +90,22 @@ class RedemptionCodeDB:
         )
 
         sql = """UPDATE redemption_code SET
-            productRef = ?,
-            firstName = ?,
-            lastName = ?,
-            address1 = ?,
-            address2 = ?,
-            city = ?,
-            state = ?,
-            postalCode = ?,
-            country = ?,
-            phone = ?,
-            email = ?,
-            tracking = ?,
-            updated = CURRENT_TIMESTAMP
-            WHERE redeemCode = ?;"""
+            "productRef" = %s,
+            "firstName" = %s,
+            "lastName" = %s,
+            "address1" = %s,
+            "address2" = %s,
+            "city" = %s,
+            "state" = %s,
+            "postalCode" = %s,
+            "country" = %s,
+            "phone" = %s,
+            "email" = %s,
+            "tracking" = %s,
+            "updated" = CURRENT_TIMESTAMP
+            WHERE "redeemCode" = %s;"""
         cur.execute(sql, params)
-        cur.execute("select * from redemption_code where redeemCode=?;", (redemption_code_object["redeemCode"],))
+        cur.execute("""select * from redemption_code where "redeemCode"=%s;""", (redemption_code_object["redeemCode"],))
 
         result = cur.fetchone()
 
@@ -105,8 +116,8 @@ class RedemptionCodeDB:
     def get_redemption_code_by_code(self, redemption_code):
         print("get_redemption_code_by_code()")
         conn = self.get_connection()
-        cur = conn.cursor()
-        cur.execute("select * from redemption_code where redeemCode=?;", (redemption_code,))
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        cur.execute("""select * from redemption_code where "redeemCode"=%s;""", (redemption_code,))
 
         result = cur.fetchone()
 
@@ -117,11 +128,11 @@ class RedemptionCodeDB:
     def get_unused_redemption_codes(self):
         print("get_unused_redemption_codes()")
         conn = self.get_connection()
-        cur = conn.cursor()
-        cur.execute("select productRef, redeemCode from redemption_code where tracking is null and city is null and firstName is null and state is null order by productRef, redeemCode;")
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        cur.execute("""select "productRef", "redeemCode" from redemption_code where "tracking" is null and "city" is null and "firstName" is null and "state" is null order by "productRef", "redeemCode";""")
 
         result = cur.fetchall()
-
+        print(result)
         self.commit_close_connection(conn)
 
         return result
@@ -129,29 +140,29 @@ class RedemptionCodeDB:
     def get_pending_shipping_redemption_codes(self):
         print("get_unused_redemption_codes()")
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         cur.execute("""
             SELECT
-                productRef,
-                redeemCode,
-                firstName,
-                lastName,
-                address1,
-                address2,
-                city,
-                state,
-                postalCode,
-                phone,
-                email,
-                tracking,
-                created,
-                updated,
+                "productRef",
+                "redeemCode",
+                "firstName",
+                "lastName",
+                "address1",
+                "address2",
+                "city",
+                "state",
+                "postalCode",
+                "phone",
+                "email",
+                "tracking",
+                "created",
+                "updated",
                 CASE
-                    WHEN tracking is null or tracking = '' THEN 'PENDING SHIPPING'
+                    WHEN "tracking" is null or "tracking" = '' THEN 'PENDING SHIPPING'
                     ELSE 'SHIPPED'
-                END as status
+                END as "status"
             FROM redemption_code
-            WHERE tracking is null and city is not null and firstName is not null and state is not null order by created;""")
+            WHERE "tracking" is null and "city" is not null and "firstName" is not null and "state" is not null order by "created";""")
 
         result = cur.fetchall()
 
@@ -162,29 +173,29 @@ class RedemptionCodeDB:
     def get_shipped_redemption_codes(self):
         print("get_unused_redemption_codes()")
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         cur.execute("""
             SELECT
-                productRef,
-                redeemCode,
-                firstName,
-                lastName,
-                address1,
-                address2,
-                city,
-                state,
-                postalCode,
-                phone,
-                email,
-                tracking,
-                created,
-                updated,
+                "productRef",
+                "redeemCode",
+                "firstName",
+                "lastName",
+                "address1",
+                "address2",
+                "city",
+                "state",
+                "postalCode",
+                "phone",
+                "email",
+                "tracking",
+                "created",
+                "updated",
                 CASE
-                    WHEN tracking is null or tracking = '' THEN 'PENDING SHIPPING'
+                    WHEN "tracking" is null or "tracking" = '' THEN 'PENDING SHIPPING'
                     ELSE 'SHIPPED'
-                END as status
+                END as "status"
             FROM redemption_code
-            WHERE tracking is not null;""")
+            WHERE "tracking" is not null;""")
 
         result = cur.fetchall()
 
@@ -195,29 +206,29 @@ class RedemptionCodeDB:
     def get_all_used_redemption_codes(self):
         print("get_all_used_redemption_codes()")
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         cur.execute("""
             SELECT
-                productRef,
-                redeemCode,
-                firstName,
-                lastName,
-                address1,
-                address2,
-                city,
-                state,
-                postalCode,
-                phone,
-                email,
-                tracking,
-                created,
-                updated,
+                "productRef",
+                "redeemCode",
+                "firstName",
+                "lastName",
+                "address1",
+                "address2",
+                "city",
+                "state",
+                "postalCode",
+                "phone",
+                "email",
+                "tracking",
+                "created",
+                "updated",
                 CASE
-                    WHEN tracking is null or tracking = '' THEN 'PENDING SHIPPING'
+                    WHEN "tracking" is null or "tracking" = '' THEN 'PENDING SHIPPING'
                     ELSE 'SHIPPED'
-                END as status
+                END as "status"
             FROM redemption_code
-            WHERE firstName is not null and state is not null order by created;""")
+            WHERE "firstName" is not null and "state" is not null order by "created";""")
 
         result = cur.fetchall()
 

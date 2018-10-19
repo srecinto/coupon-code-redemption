@@ -2,6 +2,7 @@ import os
 import config
 import json
 import time
+import datetime
 import csv
 import io
 
@@ -27,6 +28,11 @@ UTILS ##########################################################################
 """
 
 
+def json_converter(o):
+    if isinstance(o, datetime.datetime):
+        return o.__str__()
+
+
 def validate_not_null(json, response, name, has_validation_error):
     print("validate_not_null()")
     result_message = ""
@@ -50,7 +56,7 @@ def validate_email(response, email, has_validation_error):
 
 def validate_redemption_code(response, redeemCode, has_validation_error):
     print("validate_redemption_code()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
     redemption_code_record = redemption_code_db.get_redemption_code_by_code(redeemCode)
 
     # First check if it exsists then check that is had not been used already
@@ -69,7 +75,7 @@ def validate_redemption_code(response, redeemCode, has_validation_error):
 def map_redemption_code_record(request_json, redemption_code_record):
     print("map_redemption_code_record()")
 
-    #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True)))
+    #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True, default=json_converter)))
 
     redemption_code_record["redeemCode"] = request_json["redeemCode"]
     redemption_code_record["firstName"] = request_json["firstName"]
@@ -82,7 +88,7 @@ def map_redemption_code_record(request_json, redemption_code_record):
     redemption_code_record["phone"] = request_json["phone"]
     redemption_code_record["email"] = request_json["email"]
 
-    #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True)))
+    #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True, default=json_converter)))
 
 
 """
@@ -138,13 +144,13 @@ def redeem_code():
     has_validation_error, redemption_code_record = validate_redemption_code(response, request_json["redeemCode"], has_validation_error)
 
     if not has_validation_error:
-        redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
-        #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True)))
+        redemption_code_db = RedemptionCodeDB()
+        #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True, default=json_converter)))
         map_redemption_code_record(request_json, redemption_code_record)
-        #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True)))
+        #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True, default=json_converter)))
         redemption_code_record_updated = redemption_code_db.update_redemption_code(redemption_code_record)
 
-        print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True)))
+        print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True, default=json_converter)))
 
         response["status"] = "SUCCESS"
         response["message"] = "Your request is being processed.  Please check your email for a status update."
@@ -179,7 +185,7 @@ def codeFileUpload():
 
         uploadedFile.save(fileLocation)
 
-        redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+        redemption_code_db = RedemptionCodeDB()
 
         with open(fileLocation, mode='r', encoding='utf-8-sig') as csv_file:
             csv_reader = csv.DictReader(csv_file)
@@ -205,7 +211,7 @@ def codeFileUpload():
 def available_codes_tab():
     """ handler for the admmin availablecodestab url path of the app """
     print("available_codes_tab()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
 
     message = ""
     unused_codes = redemption_code_db.get_unused_redemption_codes()
@@ -228,7 +234,7 @@ def available_codes_tab():
 def pending_shipping_tab():
     """ handler for the admmin pendingshippingtab url path of the app """
     print("available_codes_tab()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
 
     message = ""
     pending_shipping_items = redemption_code_db.get_pending_shipping_redemption_codes()
@@ -251,7 +257,7 @@ def pending_shipping_tab():
 def shipped_tab():
     """ handler for the admmin shipped_tab url path of the app """
     print("shipped_tab()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
 
     message = ""
     shipped_items = redemption_code_db.get_shipped_redemption_codes()
@@ -274,7 +280,7 @@ def shipped_tab():
 def all_tab():
     """ handler for the admmin all_tab url path of the app """
     print("all_tab()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
 
     message = ""
     all_items = redemption_code_db.get_all_used_redemption_codes()
@@ -297,7 +303,7 @@ def all_tab():
 def export_all(status=None):
     """ handler for the admmin export_all url path of the app """
     print("export_all()")
-    redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+    redemption_code_db = RedemptionCodeDB()
 
     message = ""
     all_items = None
@@ -360,11 +366,11 @@ def updateTracking(redeem_code, tracking):
         has_validation_error = True
 
     if not has_validation_error:
-        redemption_code_db = RedemptionCodeDB(config.app["db_file_name"])
+        redemption_code_db = RedemptionCodeDB()
         redemption_code_record = redemption_code_db.get_redemption_code_by_code(redeem_code)
         redemption_code_record["tracking"] = tracking
         redemption_code_record_updated = redemption_code_db.update_redemption_code(redemption_code_record)
-        print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True)))
+        print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True, default=json_converter)))
 
         response["status"] = "SUCCESS"
         response["message"] = "Updated successfully!"
@@ -376,5 +382,5 @@ MAIN ###########################################################################
 """
 if __name__ == "__main__":
     # This is to run on c9.io.. you may need to change or make your own runner
-    print( "config.app: {0}".format(json.dumps(config.app, indent=4, sort_keys=True)) )
+    print( "config.app: {0}".format(json.dumps(config.app, indent=4, sort_keys=True, default=json_converter)) )
     app.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", 8080)))

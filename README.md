@@ -10,3 +10,6 @@ This app is meant to stream line processing coupon codes and tracking informatio
 * Admin can upload redeemed items with tracking info, which will email the user that their order has been processed.
 * Admin can download history of orders.
 * There will be one public screen for users to redeem their codes and add shipping information
+
+Using Postgress
+sudo apt-get install postgresql

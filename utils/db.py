@@ -132,7 +132,6 @@ class RedemptionCodeDB:
         cur.execute("""select "productRef", "redeemCode" from redemption_code where "tracking" is null and "city" is null and "firstName" is null and "state" is null order by "productRef", "redeemCode";""")
 
         result = cur.fetchall()
-        print(result)
         self.commit_close_connection(conn)
 
         return result

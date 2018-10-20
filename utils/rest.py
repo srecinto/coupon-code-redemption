@@ -134,6 +134,30 @@ class OktaUtil:
         return self.execute_post(url, body)
 
 
+    def send_mail(self, template_id, recipients, substitution=None):
+        print("send_mail()")
+        url = "{0}/transmissions".format(os.environ["SPARKPOST_API_URL"])
+        headers = {
+            "Authorization": os.environ["SPARKPOST_API_KEY"],
+            "Content-Type": "application/json"
+        }
+        body = {
+            "options": {
+                "sandbox": False
+            },
+            "content": {
+                "template_id": template_id,
+                "use_draft_template": False
+            },
+            "recipients": recipients
+        }
+
+        if substitution:
+            body["substitution_data"] = substitution
+
+        return self.execute_post(url, body, headers=headers)
+
+
     def execute_post(self, url, body, headers=None):
         print("execute_post(): ", url)
         print(body)

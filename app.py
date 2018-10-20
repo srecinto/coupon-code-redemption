@@ -202,6 +202,16 @@ def redeem_code():
         redemption_code_record_updated = redemption_code_db.update_redemption_code(redemption_code_record)
 
         print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True, default=json_converter)))
+        okta_util = OktaUtil(request.headers)
+        recipients = [
+            {
+                "address": {
+                    "email": request_json["email"],
+                    "name": "{0} {1}".format(request_json["firstName"], request_json["lastName"])
+                }
+            }
+        ]
+        mail_response = okta_util.send_mail(os.environ["SPARKPOST_THANK_TEMPLATE_ID"], recipients)
 
         response["status"] = "SUCCESS"
         response["message"] = "Your request is being processed.  Please check your email for a status update."
@@ -459,6 +469,20 @@ def updateTracking(redeem_code, tracking):
         redemption_code_record["tracking"] = tracking
         redemption_code_record_updated = redemption_code_db.update_redemption_code(redemption_code_record)
         print("redemption_code_record_updated: {0}".format(json.dumps(redemption_code_record_updated, indent=4, sort_keys=True, default=json_converter)))
+
+        okta_util = OktaUtil(request.headers)
+        recipients = [
+            {
+                "address": {
+                    "email": redemption_code_record["email"],
+                    "name": "{0} {1}".format(redemption_code_record["firstName"], redemption_code_record["lastName"])
+                }
+            }
+        ]
+        substitution = {
+            "tracking": tracking
+        }
+        mail_response = okta_util.send_mail(os.environ["SPARKPOST_TRACK_TEMPLATE_ID"], recipients, substitution)
 
         response["status"] = "SUCCESS"
         response["message"] = "Updated successfully!"

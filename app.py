@@ -6,11 +6,13 @@ import datetime
 import csv
 import io
 
+from functools import wraps
 from flask import Flask, request, send_from_directory, redirect, make_response, render_template, Response
 from flask_sslify import SSLify
 from werkzeug import secure_filename
 from email.utils import parseaddr
 from utils.db import RedemptionCodeDB
+from utils.rest import OktaUtil
 
 """
 GLOBAL VARIABLES ########################################################################################################
@@ -26,6 +28,42 @@ sslify = SSLify(app, permanent=True, subdomains=True)
 """
 UTILS ###################################################################################################################
 """
+
+
+def authorized(f):
+    @wraps(f)
+    def decorated_function(*args, **kws):
+        """ Decorator fucntion to make endpoint authorization checks easier for scopes defined in Okta """
+        print("authorized()")
+        authorization_header = None
+        has_access = False
+        authorization_token = None
+        okta_util = OktaUtil(request.headers)
+
+        if "Authorization" in request.headers:
+            authorization_header = request.headers["Authorization"]
+            authorization_token = authorization_header.replace("Bearer ", "") # Just get the access toke for introspection
+        elif request.cookies:
+            authorization_token = request.cookies.get("token")
+
+        if authorization_token:
+            introspection_response = okta_util.introspect_oauth_token(authorization_token)
+            print("introspection_response: {0}".format(json.dumps(introspection_response, indent=4, sort_keys=True)))
+            if "active" in introspection_response:
+                if introspection_response["active"]:
+                    # Add scope checks here if you like
+                    has_access = True
+
+        # print "authorization_header: {0}".format(authorization_header)
+
+        if has_access:
+            return f(*args, **kws)
+        else:
+            response = make_response(redirect(okta_util.create_oidc_auth_code_url(nonce="d32jktds0-wdkjbu-wd")))
+            response.set_cookie('token', "")
+            return response
+
+    return decorated_function
 
 
 def json_converter(o):
@@ -89,6 +127,16 @@ def map_redemption_code_record(request_json, redemption_code_record):
     redemption_code_record["email"] = request_json["email"]
 
     #print("redemption_code_record: {0}".format(json.dumps(redemption_code_record, indent=4, sort_keys=True, default=json_converter)))
+
+
+def get_oauth_token(oauth_code):
+    print("get_oauth_token()")
+    okta_util = OktaUtil(request.headers)
+
+    oauth_token_response_json = okta_util.get_oauth_token(oauth_code)
+    print("oauth_token_response_json: {0}".format(json.dumps(oauth_token_response_json), indent=4, sort_keys=True))
+
+    return oauth_token_response_json["access_token"]
 
 
 """
@@ -160,7 +208,27 @@ def redeem_code():
     return json.dumps(response)
 
 
+@app.route('/oidc', methods=["POST"])
+def oidc():
+    """ handler for the oidc call back of the app """
+    # print(request.form)
+    print("oidc()")
+
+    if "error" in request.form:
+        print("ERROR: {0}, MESSAGE: {1}".format(request.form["error"], request.form["error_description"]))
+
+    oidc_code = request.form["code"]
+    print("oidc_code: {0}", oidc_code)
+    oauth_token = get_oauth_token(oidc_code)
+    redirect_url = os.environ["APP_AUTH_URL"]
+
+    response = make_response(redirect(redirect_url))
+    response.set_cookie('token', oauth_token)
+    return response
+
+
 @app.route('/admin')
+@authorized
 def admin():
     """ handler for the admmin url path of the app """
     print("admin()")
@@ -172,6 +240,7 @@ def admin():
 
 
 @app.route('/admin/codefileupload', methods=["POST"])
+@authorized
 def codeFileUpload():
     print("codeFileUpload()")
 
@@ -208,6 +277,7 @@ def codeFileUpload():
 
 
 @app.route('/admin/availablecodestab')
+@authorized
 def available_codes_tab():
     """ handler for the admmin availablecodestab url path of the app """
     print("available_codes_tab()")
@@ -231,6 +301,7 @@ def available_codes_tab():
 
 
 @app.route('/admin/pendingshippingtab')
+@authorized
 def pending_shipping_tab():
     """ handler for the admmin pendingshippingtab url path of the app """
     print("available_codes_tab()")
@@ -254,6 +325,7 @@ def pending_shipping_tab():
 
 
 @app.route('/admin/shippedtab')
+@authorized
 def shipped_tab():
     """ handler for the admmin shipped_tab url path of the app """
     print("shipped_tab()")
@@ -277,6 +349,7 @@ def shipped_tab():
 
 
 @app.route('/admin/alltab')
+@authorized
 def all_tab():
     """ handler for the admmin all_tab url path of the app """
     print("all_tab()")
@@ -300,6 +373,7 @@ def all_tab():
 
 
 @app.route('/admin/exportall/<status>')
+@authorized
 def export_all(status=None):
     """ handler for the admmin export_all url path of the app """
     print("export_all()")
@@ -349,6 +423,7 @@ def export_all(status=None):
 
 
 @app.route('/admin/updateTracking/<redeem_code>/<tracking>', methods=["POST"])
+@authorized
 def updateTracking(redeem_code, tracking):
     """ handler for the redeeming the code of the app """
     print("updateTracking()")

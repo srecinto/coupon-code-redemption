@@ -275,8 +275,8 @@ def admin():
 
 @app.route('/admin/codefileupload', methods=["POST"])
 @authorized
-def codeFileUpload():
-    print("codeFileUpload()")
+def code_file_upload():
+    print("code_file_upload()")
 
     if "codeUploadFile" in request.files:
         message="Upload completed!"
@@ -303,6 +303,43 @@ def codeFileUpload():
                     message="Upload completed! Duplicate codes detected."
                 else:
                     print(redemption_code_db.create_redemption_code(row["RedemptionCode"], row["ProductRef"]))
+
+
+    response = make_response(render_template("admin.html", app_config=config.app, message=message))
+
+    return response
+
+
+@app.route('/admin/trackingfileupload', methods=["POST"])
+@authorized
+def tracking_file_upload():
+    print("trackingfileupload()")
+
+    if "codeUploadFile" in request.files:
+        message="Upload completed!"
+        uploadedFile = request.files["codeUploadFile"]
+        print("fileName: {0}".format(uploadedFile.filename))
+
+        fileLocation = "{0}/{1}".format(config.app["temp_file_path"], secure_filename(uploadedFile.filename))
+        print("fileLocation: {0}".format(fileLocation))
+
+        uploadedFile.save(fileLocation)
+
+        redemption_code_db = RedemptionCodeDB()
+
+        with open(fileLocation, mode='r', encoding='utf-8-sig') as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            line_count = 0
+            for row in csv_reader:
+                print(row)
+                # Check for duplicates
+                rowFound = redemption_code_db.get_redemption_code_by_code(row["RedemptionCode"])
+
+                if rowFound:
+                    print(updateTracking(row["RedemptionCode"], row["Tracking"]))
+                else:
+                    message="Upload completed! Some codes were missing."
+
 
 
     response = make_response(render_template("admin.html", app_config=config.app, message=message))

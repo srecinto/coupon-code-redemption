@@ -110,7 +110,13 @@
 
             function handleFileUpload() {
                 console.log("handleFileUpload()");
-
+                if($("#fileUploadOption").val() == "codes") {
+                    // Upload Codes
+                    $("#fileUpload").attr("action", "/admin/codefileupload");
+                } else {
+                    // Upload Tracking
+                    $("#fileUpload").attr("action", "/admin/trackingfileupload");
+                }
                 $("#fileUpload").submit();
             }
             //]]>
@@ -123,8 +129,13 @@
         <div>&nbsp;</div>
         {% endif %}
         <div>
-            <form id="fileUpload" name="fileUpload" action="/admin/codefileupload" method="POST" enctype="multipart/form-data">
-                Upload Codes: <input id="codeUploadFile" name="codeUploadFile" type="file" /><input id="uploadFile" type="button" value="Upload" />
+            <form id="fileUpload" name="fileUpload" method="POST" enctype="multipart/form-data">
+                Upload
+                <select id="fileUploadOption">
+                    <option value="codes">Codes</option>
+                    <option value="tracking">Tracking</option>
+                </select>:
+                <input id="codeUploadFile" name="codeUploadFile" type="file" /><input id="uploadFile" type="button" value="Upload" />
             </form>
         </div>
         <div>&nbsp;</div>

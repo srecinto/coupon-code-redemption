@@ -5,9 +5,10 @@ import time
 import datetime
 import csv
 import io
+import uuid
 
 from functools import wraps
-from flask import Flask, request, send_from_directory, redirect, make_response, render_template, Response
+from flask import Flask, request, session, send_from_directory, redirect, make_response, render_template, Response
 from flask_sslify import SSLify
 from werkzeug import secure_filename
 from email.utils import parseaddr
@@ -59,7 +60,9 @@ def authorized(f):
         if has_access:
             return f(*args, **kws)
         else:
-            response = make_response(redirect(okta_util.create_oidc_auth_code_url(nonce="d32jktds0-wdkjbu-wd")))
+            session["nonce"] = str(uuid.uuid4())
+            session["state"] = str(uuid.uuid4())
+            response = make_response(redirect(okta_util.create_oidc_auth_code_url(state=session["state"], nonce=session["nonce"])))
             response.set_cookie('token', "")
             return response
 
@@ -211,19 +214,29 @@ def redeem_code():
 @app.route('/oidc', methods=["POST"])
 def oidc():
     """ handler for the oidc call back of the app """
-    # print(request.form)
     print("oidc()")
+    # print(request.form)
 
     if "error" in request.form:
         print("ERROR: {0}, MESSAGE: {1}".format(request.form["error"], request.form["error_description"]))
 
-    oidc_code = request.form["code"]
-    print("oidc_code: {0}", oidc_code)
-    oauth_token = get_oauth_token(oidc_code)
-    redirect_url = os.environ["APP_AUTH_URL"]
+    # Check Nonce
+    # print("state: '{0}'".format(session["state"]))
+    # print("nonce: '{0}'".format(session["nonce"]))
+    if session["state"] == request.form["state"]:
+        oidc_code = request.form["code"]
+        print("oidc_code: {0}".format(oidc_code))
+        oauth_token = get_oauth_token(oidc_code)
+        redirect_url = os.environ["APP_AUTH_URL"]
+        response = make_response(redirect(redirect_url))
+        response.set_cookie('token', oauth_token)
+    else:
+        print("FAILED TO MATCH STATE!!!")
+        response = make_response(redirect(os.environ["APP_AUTH_URL"]))
 
-    response = make_response(redirect(redirect_url))
-    response.set_cookie('token', oauth_token)
+    session.pop("state", None)
+    session.pop("nonce", None)
+
     return response
 
 

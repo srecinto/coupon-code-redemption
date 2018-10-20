@@ -206,7 +206,7 @@ class OktaUtil:
         return encoded_auth
 
 
-    def create_oidc_auth_code_url(self, nonce, session_token=None):
+    def create_oidc_auth_code_url(self, state, nonce, session_token=None):
         print("create_oidc_auth_code_url()")
         print("session_token: {0}".format(session_token))
         session_option = ""
@@ -223,10 +223,9 @@ class OktaUtil:
             "response_type=code&"
             "client_id={clint_id}&"
             "redirect_uri={redirect_uri}&"
-            "state=hjasd-u832&"
+            "state={state}&"
             "nonce={nonce}&"
             "response_mode=form_post&"
-            "prompt=none&"
             "scope=openid"
             "{session_option}"
         ).format(
@@ -234,8 +233,9 @@ class OktaUtil:
             auth_server=auth_server,
             clint_id=self.OIDC_CLIENT_ID,
             redirect_uri=self.OIDC_REDIRECT_URL,
-            session_option=session_option,
-            nonce=nonce
+            state=state,
+            nonce=nonce,
+            session_option=session_option
         )
         return url
 

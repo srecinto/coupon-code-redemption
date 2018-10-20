@@ -19,6 +19,6 @@ create table redemption_code (
     primary key ("redeemCode")
 );
 
-create user coupon_redemption_admin with password '<PASSWORD HERE>'';
+create user coupon_redemption_admin with password '<PASSWORD HERE>';
 
 grant select, insert, update, delete on table redemption_code to coupon_redemption_admin;

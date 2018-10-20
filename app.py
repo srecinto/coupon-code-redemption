@@ -165,6 +165,17 @@ def index():
     return response
 
 
+@app.route('/order-confirmation')
+def order_confirmation():
+    """ handler for the order confirmation url path of the app """
+    print("order_confirmation()")
+    message = ""
+
+    response = make_response(render_template("order_confirmation.html", app_config=config.app, message=message))
+
+    return response
+
+
 @app.route('/redeemCode', methods=["POST"])
 def redeem_code():
     """ handler for the redeeming the code of the app """

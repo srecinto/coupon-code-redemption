@@ -1,50 +1,7 @@
-<html>
-    <head>
-        <title>Groupon Redeem From</title>
-        <script
-            src="https://code.jquery.com/jquery-3.3.1.min.js"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-            crossorigin="anonymous"></script>
-        <script
-            src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-            integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-            crossorigin="anonymous"></script>
-        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+{% extends "_public.html" %}
+{% block title %}CBD Chicago Groupon Redemption Form{% endblock %}
+{% block content %}
         <style>
-            body{
-                background-color: #2bb673;
-                padding: 0px;
-                margin: 0px;
-            }
-            /* Style the video: 100% width and height to cover the entire window */
-            #smokeyBG {
-                position: fixed;
-                right: 0;
-                bottom: 0;
-                min-width: 100%;
-                min-height: 100%;
-                filter:opacity(60%);
-                transform: translateX(10%) translateY(40%);
-            }
-
-            .logo {
-                width: 40%;
-                height: auto;
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .content {
-                margin-top: 5%;
-                background: rgba(0, 0, 0, 0.5);
-                color: #f1f1f1;
-                width: 50%;
-                padding: 20px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
             form {
                 overflow: hidden;
             }
@@ -94,7 +51,7 @@
                         console.log(data);
                         var jsonResponse = JSON.parse(data);
                         if(jsonResponse.status == "SUCCESS"){
-                            alert(jsonResponse.message);
+                            location.href="/order-confirmation"
                         } else {
                             alert(jsonResponse.message);
                         }
@@ -116,11 +73,6 @@
 
             //]]>
         </script>
-    </head>
-    <body>
-        <!-- video autoplay muted loop id="smokeyBG">
-            <source src="/vid/smokey_bg_slow1.mp4" type="video/mp4">
-        </video -->
         <div class="content">
             <img class="logo" src="/img/logo_solid.png" alt="CBD Chicago" />
             <form id="redemptionForm" name="redemptionForm" action="/redeemCode" method="POST">
@@ -191,5 +143,4 @@
                 <input type="button" id="redeemButton" value="Redeem Code">
             </form>
         </div>
-    </body>
-</html>
+{% endblock %}

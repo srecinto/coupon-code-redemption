@@ -290,19 +290,35 @@ def code_file_upload():
 
         redemption_code_db = RedemptionCodeDB()
 
+        arg_list = []
+        duplicate_list = []
+
         with open(fileLocation, mode='r', encoding='utf-8-sig') as csv_file:
             csv_reader = csv.DictReader(csv_file)
             line_count = 0
+
+            conn = redemption_code_db.get_connection()
+
             for row in csv_reader:
                 print(row)
                 # Check for duplicates
-                dupeCheckRow = redemption_code_db.get_redemption_code_by_code(row["RedemptionCode"])
+
+                dupeCheckRow = redemption_code_db.get_redemption_code_by_code(row["RedemptionCode"], conn)
 
                 if dupeCheckRow:
                     print("Duplicate!  Handle it!")
+                    duplicate_list.append(row["RedemptionCode"])
                     message="Upload completed! Duplicate codes detected."
                 else:
-                    print(redemption_code_db.create_redemption_code(row["RedemptionCode"], row["ProductRef"]))
+                    arg_list.append([row["RedemptionCode"],row["ProductRef"]])
+
+            if(len(duplicate_list) != 0):
+                message="Upload completed! Duplicate codes detected. {0}".format(duplicate_list)
+
+            redemption_code_db.commit_close_connection(conn)
+
+        redemption_code_db.batch_create_redemption_code(arg_list)
+
 
 
     response = make_response(render_template("admin.html", app_config=config.app, message=message))

@@ -69,6 +69,19 @@ class RedemptionCodeDB:
 
         return result
 
+    def batch_create_redemption_code(self, params_list):
+        print("batch_create_redemption_code()")
+        conn = self.get_connection()
+        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        sql = """insert into redemption_code ("redeemCode", "productRef") values ($1, $2)"""
+
+        cur.execute("PREPARE stmt AS {0}".format(sql))
+        psycopg2.extras.execute_batch(cur, "EXECUTE stmt (%s, %s)", params_list, page_size=100)
+        cur.execute("DEALLOCATE stmt")
+
+        print("Total Records Inserted")
+        self.commit_close_connection(conn)
+
     def update_redemption_code(self, redemption_code_object):
         print("update_redemption_code()")
         conn = self.get_connection()
@@ -113,15 +126,24 @@ class RedemptionCodeDB:
 
         return result
 
-    def get_redemption_code_by_code(self, redemption_code):
+    def get_redemption_code_by_code(self, redemption_code, conn=None):
         print("get_redemption_code_by_code()")
-        conn = self.get_connection()
-        cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
-        cur.execute("""select * from redemption_code where "redeemCode"=%s;""", (redemption_code,))
+        sql = """select * from redemption_code where "redeemCode"=%s;"""
+        result = None
 
-        result = cur.fetchone()
+        if(conn):
+            cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+            cur.execute(sql, (redemption_code,))
 
-        self.commit_close_connection(conn)
+            result = cur.fetchone()
+        else:
+            conn = self.get_connection()
+            cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+            cur.execute(sql, (redemption_code,))
+
+            result = cur.fetchone()
+
+            self.commit_close_connection(conn)
 
         return result
 

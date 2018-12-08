@@ -319,8 +319,6 @@ def code_file_upload():
 
         redemption_code_db.batch_create_redemption_code(arg_list)
 
-
-
     response = make_response(render_template("admin.html", app_config=config.app, message=message))
 
     return response

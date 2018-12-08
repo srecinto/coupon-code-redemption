@@ -87,6 +87,22 @@
             .divTableHeading { display: table-header-group;}
             .divTableFoot { display: table-footer-group;}
             .divTableBody { display: table-row-group;}
+
+            .spinner-overlay {
+                background-color: #fff;
+                opacity: 0.4;
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                z-index: 100;
+                height: 100%;
+                width: 100%;
+                overflow: hidden;
+                background-image: url('/img/spinner.gif');
+                background-position: center;
+                background-repeat: no-repeat;
+                display: none;
+            }
         </style>
         <script>
             //<![CDATA[
@@ -97,11 +113,16 @@
                 //$("#tabs").tabs();
                 $( "#tabs" ).tabs({
                     beforeLoad: function( event, ui ) {
+                        $("#spinner").show();
                         ui.jqXHR.fail(function() {
                             ui.panel.html(
                                 "Couldn't load this tab. We'll try to fix this as soon as possible. " +
                                 "If this wouldn't be a demo." );
+                            $("#spinner").hide();
                         });
+                    },
+                    load: function ( event, ui) {
+                        $("#spinner").hide();
                     }
                 });
 
@@ -117,6 +138,7 @@
                     // Upload Tracking
                     $("#fileUpload").attr("action", "/admin/trackingfileupload");
                 }
+                $("#spinner").show();
                 $("#fileUpload").submit();
             }
             //]]>
@@ -147,5 +169,6 @@
                 <li><a href="/admin/alltab">All History</a></li>
             </ul>
         </div>
+        <div id="spinner" class="spinner-overlay" ></div>
     </body>
 </html>

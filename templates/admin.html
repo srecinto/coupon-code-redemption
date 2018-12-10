@@ -112,14 +112,21 @@
                 // Set up Tabs
                 //$("#tabs").tabs();
                 $( "#tabs" ).tabs({
+                    active: {{ paging_info.active_tab }},
                     beforeLoad: function( event, ui ) {
-                        $("#spinner").show();
-                        ui.jqXHR.fail(function() {
-                            ui.panel.html(
-                                "Couldn't load this tab. We'll try to fix this as soon as possible. " +
-                                "If this wouldn't be a demo." );
-                            $("#spinner").hide();
-                        });
+                        if($("#tabs").tabs("option", "active") == {{ paging_info.active_tab }}) {
+                            $("#spinner").show();
+                            ui.jqXHR.fail(function() {
+                                ui.panel.html(
+                                    "Couldn't load this tab. We'll try to fix this as soon as possible. " +
+                                    "If this wouldn't be a demo." );
+                                $("#spinner").hide();
+                            });
+                        } else {
+                            //Redirect
+                            console.log("tabs.active: " + $("#tabs").tabs("option", "active") + " paging_info.active_tab: {{ paging_info.active_tab }}");
+                            location.href = "/admin?tab=" + $("#tabs").tabs("option", "active");
+                        }
                     },
                     load: function ( event, ui) {
                         $("#spinner").hide();
@@ -163,10 +170,10 @@
         <div>&nbsp;</div>
         <div id="tabs">
             <ul>
-                <li><a href="/admin/pendingshippingtab">Pending Shipping</a></li>
-                <li><a href="/admin/shippedtab">Shipped</a></li>
-                <li><a href="/admin/availablecodestab">Unused Codes</a></li>
-                <li><a href="/admin/alltab">All History</a></li>
+                <li><a href="/admin/pendingshippingtab{{paging_info.as_query_params}}">Pending Shipping</a></li>
+                <li><a href="/admin/shippedtab{{paging_info.as_query_params}}">Shipped</a></li>
+                <li><a href="/admin/availablecodestab{{paging_info.as_query_params}}">Unused Codes</a></li>
+                <li><a href="/admin/alltab{{paging_info.as_query_params}}">All History</a></li>
             </ul>
         </div>
         <div id="spinner" class="spinner-overlay" ></div>

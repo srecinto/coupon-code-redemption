@@ -147,11 +147,19 @@ class RedemptionCodeDB:
 
         return result
 
-    def get_unused_redemption_codes(self):
+    def get_unused_redemption_codes(self, rows_per_page, current_page):
         print("get_unused_redemption_codes()")
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
-        cur.execute("""select "productRef", "redeemCode" from redemption_code where "tracking" is null and "city" is null and "firstName" is null and "state" is null order by "productRef", "redeemCode";""")
+        cur.execute("""select "productRef", "redeemCode" from redemption_code
+            where "tracking" is null and "city" is null
+            and "firstName" is null
+            and "state" is null
+            order by "productRef", "redeemCode"
+        LIMIT {rows_per_page} OFFSET {starting_row};""".format(
+            rows_per_page=rows_per_page,
+            starting_row=((current_page - 1) * rows_per_page) # Need to set an offset to get the right records
+        ))
 
         result = cur.fetchall()
         self.commit_close_connection(conn)

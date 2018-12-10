@@ -18,7 +18,12 @@
     </div>
     <div class="blueTable outerTableFooter">
         <div class="tableFootStyle">
-            <div class="links"><a href="#">&laquo;</a> <a class="active" href="#">1</a> <a href="#">2</a> <a href="#">3</a> <a href="#">4</a> <a href="#">&raquo;</a></div>
+            <div class="links">
+                <a href="#">&laquo;</a>
+                {% for nav_item in paging_info.tab_paging_nav_items %}
+                <a {% if nav_item.page_number == paging_info.current_page %}class="active" {% endif %}href="{{nav_item.as_query_params}}">{{nav_item.page_number}}</a>
+                {% endfor %}
+                <a href="#">&raquo;</a></div>
         </div>
     </div>
     {% else %}

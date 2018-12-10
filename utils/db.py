@@ -162,9 +162,20 @@ class RedemptionCodeDB:
         ))
 
         result = cur.fetchall()
+
+        cur.execute("""select count(*) as result_count
+            from redemption_code
+            where "tracking" is null and "city" is null
+            and "firstName" is null
+            and "state" is null""")
+
+        result_count = cur.fetchone()["result_count"]
+
+        print("result_count: {0}".format(result_count))
+
         self.commit_close_connection(conn)
 
-        return result
+        return result, result_count
 
     def get_pending_shipping_redemption_codes(self):
         print("get_unused_redemption_codes()")

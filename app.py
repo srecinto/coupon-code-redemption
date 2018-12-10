@@ -139,31 +139,24 @@ def get_paging_info(active_tab, current_page=0, rows_per_page=0, total_rows=0):
     if rows_per_page != 0:
         max_end_page = (total_rows / rows_per_page)
 
+    tab_paging_nav_items = []
+
+    for i in range(pages_per_display):
+        page = i + 1 # Need to add the offset
+        tab_paging_nav_items.append({
+            "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, page, rows_per_page),
+            "page_number": page,
+            "is_active": page == current_page
+        })
+
+
     paging_info = {
         "active_tab": active_tab,
         "current_page": current_page,
         "rows_per_page": rows_per_page,
         "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page, rows_per_page),
-        "tab_paging_nav_items": [
-            {
-                "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page, rows_per_page),
-                "page_number": current_page,
-                "is_active": True
-            },
-            {
-                "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page + 1, rows_per_page),
-                "page_number": current_page + 1
-            },
-            {
-                "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page + 2, rows_per_page),
-                "page_number": current_page + 2
-            },
-            {
-                "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page + 3, rows_per_page),
-                "page_number": current_page + 3
-            }
-        ],
-        "total_rows": 0
+        "tab_paging_nav_items": tab_paging_nav_items,
+        "total_rows": total_rows
     }
 
     return paging_info
@@ -440,9 +433,9 @@ def available_codes_tab():
     rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
 
     message = ""
-    unused_codes = redemption_code_db.get_unused_redemption_codes(rows_per_page, current_page)
+    unused_codes, total_rows = redemption_code_db.get_unused_redemption_codes(rows_per_page, current_page)
     active_tab = 2 # TODO: Need to define the tab better
-    paging_info = get_paging_info(active_tab, current_page, rows_per_page, len(unused_codes))
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page, total_rows)
 
     response = make_response(
         render_template(
@@ -463,9 +456,9 @@ def pending_shipping_tab():
     redemption_code_db = RedemptionCodeDB()
 
     message = ""
-    pending_shipping_items = redemption_code_db.get_pending_shipping_redemption_codes()
+    pending_shipping_items, total_rows = redemption_code_db.get_pending_shipping_redemption_codes()
     paging_info = {
-        "total_rows": len(pending_shipping_items)
+        "total_rows": total_rows
     }
 
     response = make_response(

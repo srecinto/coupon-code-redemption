@@ -113,6 +113,63 @@ def validate_redemption_code(response, redeemCode, has_validation_error):
     return has_validation_error, redemption_code_record
 
 
+def get_paging_info(active_tab, current_page=0, rows_per_page=0, total_rows=0):
+    print("get_paging_info()")
+    """
+    Paging function:
+    - Display 5 pages at a time with controls to navigate up or down by 5
+    - If you are at the beginning or if there are 5 or less pages, the "Previous 5" nav will be disabled
+    - If there are 5 or less pages left on the other end, the "Next 5" nav will be disabled
+    - If there are less than 5 pages to display currently, only the remaining number of pages will be displayed
+    - Of the pages being displayed, it will default to the first page (closest to the previous nav)
+    - If another page is selected, the current range of pages will remain with the currently selected pages denoted
+    """
+    print("active_tab: {0}".format(active_tab))
+    print("current_page: {0}".format(current_page))
+    print("rows_per_page: {0}".format(rows_per_page))
+    print("total_rows: {0}".format(total_rows))
+
+    pages_per_display = config.app["default_pages_per_display"]
+    print("pages_per_display: {0}".format(pages_per_display))
+    start_page = current_page % pages_per_display
+    print("start_page: {0}".format(start_page))
+    # end page
+    max_end_page = 0
+
+    if rows_per_page != 0:
+        max_end_page = (total_rows / rows_per_page)
+
+    tab_paging_nav_items = []
+
+    for i in range(pages_per_display):
+        page = i + 1 # Need to add the offset
+        tab_paging_nav_items.append({
+            "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, page, rows_per_page),
+            "page_number": page,
+            "is_active": page == current_page
+        })
+
+
+    paging_info = {
+        "active_tab": active_tab,
+        "current_page": current_page,
+        "rows_per_page": rows_per_page,
+        "as_query_params": "?tab={0}&current_page={1}&rows_per_page={2}".format(active_tab, current_page, rows_per_page),
+        "tab_paging_nav_items": tab_paging_nav_items,
+        "total_rows": total_rows
+    }
+
+    return paging_info
+
+
+def safe_cast(val, to_type, default=None):
+    print("safe_cast()")
+    try:
+        return to_type(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def map_redemption_code_record(request_json, redemption_code_record):
     print("map_redemption_code_record()")
 
@@ -267,8 +324,11 @@ def admin():
     """ handler for the admmin url path of the app """
     print("admin()")
     message = ""
-
-    response = make_response(render_template("admin.html", app_config=config.app, message=message))
+    active_tab = safe_cast(request.args.get("tab"), int, 0)
+    current_page = safe_cast(request.args.get("current_page"), int, 1)
+    rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page)
+    response = make_response(render_template("admin.html", app_config=config.app, message=message, paging_info=paging_info))
 
     return response
 
@@ -290,20 +350,34 @@ def code_file_upload():
 
         redemption_code_db = RedemptionCodeDB()
 
+        arg_list = []
+        duplicate_list = []
+
         with open(fileLocation, mode='r', encoding='utf-8-sig') as csv_file:
             csv_reader = csv.DictReader(csv_file)
             line_count = 0
+
+            conn = redemption_code_db.get_connection()
+
             for row in csv_reader:
                 print(row)
                 # Check for duplicates
-                dupeCheckRow = redemption_code_db.get_redemption_code_by_code(row["RedemptionCode"])
+
+                dupeCheckRow = redemption_code_db.get_redemption_code_by_code(row["RedemptionCode"], conn)
 
                 if dupeCheckRow:
                     print("Duplicate!  Handle it!")
+                    duplicate_list.append(row["RedemptionCode"])
                     message="Upload completed! Duplicate codes detected."
                 else:
-                    print(redemption_code_db.create_redemption_code(row["RedemptionCode"], row["ProductRef"]))
+                    arg_list.append([row["RedemptionCode"],row["ProductRef"]])
 
+            if(len(duplicate_list) != 0):
+                message="Upload completed! Duplicate codes detected. {0}".format(duplicate_list)
+
+            redemption_code_db.commit_close_connection(conn)
+
+        redemption_code_db.batch_create_redemption_code(arg_list)
 
     response = make_response(render_template("admin.html", app_config=config.app, message=message))
 
@@ -354,11 +428,14 @@ def available_codes_tab():
     print("available_codes_tab()")
     redemption_code_db = RedemptionCodeDB()
 
+    active_tab = 2
+    current_page = safe_cast(request.args.get("current_page"), int, 1)
+    rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
+
     message = ""
-    unused_codes = redemption_code_db.get_unused_redemption_codes()
-    paging_info = {
-        "total_rows": len(unused_codes)
-    }
+    unused_codes, total_rows = redemption_code_db.get_unused_redemption_codes(rows_per_page, current_page)
+    active_tab = 2 # TODO: Need to define the tab better
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page, total_rows)
 
     response = make_response(
         render_template(
@@ -377,12 +454,14 @@ def pending_shipping_tab():
     """ handler for the admmin pendingshippingtab url path of the app """
     print("available_codes_tab()")
     redemption_code_db = RedemptionCodeDB()
+    
+    active_tab = 0
+    current_page = safe_cast(request.args.get("current_page"), int, 1)
+    rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
 
     message = ""
-    pending_shipping_items = redemption_code_db.get_pending_shipping_redemption_codes()
-    paging_info = {
-        "total_rows": len(pending_shipping_items)
-    }
+    pending_shipping_items, total_rows = redemption_code_db.get_pending_shipping_redemption_codes(rows_per_page, current_page)
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page, total_rows)
 
     response = make_response(
         render_template(

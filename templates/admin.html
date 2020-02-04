@@ -87,6 +87,24 @@
             .divTableHeading { display: table-header-group;}
             .divTableFoot { display: table-footer-group;}
             .divTableBody { display: table-row-group;}
+
+            .active { color: #DD0 !important; }
+
+            .spinner-overlay {
+                background-color: #fff;
+                opacity: 0.4;
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                z-index: 100;
+                height: 100%;
+                width: 100%;
+                overflow: hidden;
+                background-image: url('/img/spinner.gif');
+                background-position: center;
+                background-repeat: no-repeat;
+                display: none;
+            }
         </style>
         <script>
             //<![CDATA[
@@ -96,12 +114,24 @@
                 // Set up Tabs
                 //$("#tabs").tabs();
                 $( "#tabs" ).tabs({
+                    active: {{ paging_info.active_tab }},
                     beforeLoad: function( event, ui ) {
-                        ui.jqXHR.fail(function() {
-                            ui.panel.html(
-                                "Couldn't load this tab. We'll try to fix this as soon as possible. " +
-                                "If this wouldn't be a demo." );
-                        });
+                        if($("#tabs").tabs("option", "active") == {{ paging_info.active_tab }}) {
+                            $("#spinner").show();
+                            ui.jqXHR.fail(function() {
+                                ui.panel.html(
+                                    "Couldn't load this tab. We'll try to fix this as soon as possible. " +
+                                    "If this wouldn't be a demo." );
+                                $("#spinner").hide();
+                            });
+                        } else {
+                            //Redirect
+                            console.log("tabs.active: " + $("#tabs").tabs("option", "active") + " paging_info.active_tab: {{ paging_info.active_tab }}");
+                            location.href = "/admin?tab=" + $("#tabs").tabs("option", "active");
+                        }
+                    },
+                    load: function ( event, ui) {
+                        $("#spinner").hide();
                     }
                 });
 
@@ -117,6 +147,7 @@
                     // Upload Tracking
                     $("#fileUpload").attr("action", "/admin/trackingfileupload");
                 }
+                $("#spinner").show();
                 $("#fileUpload").submit();
             }
             //]]>
@@ -141,11 +172,12 @@
         <div>&nbsp;</div>
         <div id="tabs">
             <ul>
-                <li><a href="/admin/pendingshippingtab">Pending Shipping</a></li>
-                <li><a href="/admin/shippedtab">Shipped</a></li>
-                <li><a href="/admin/availablecodestab">Unused Codes</a></li>
-                <li><a href="/admin/alltab">All History</a></li>
+                <li><a href="/admin/pendingshippingtab{{paging_info.as_query_params}}">Pending Shipping</a></li>
+                <li><a href="/admin/shippedtab{{paging_info.as_query_params}}">Shipped</a></li>
+                <li><a href="/admin/availablecodestab{{paging_info.as_query_params}}">Unused Codes</a></li>
+                <li><a href="/admin/alltab{{paging_info.as_query_params}}">All History</a></li>
             </ul>
         </div>
+        <div id="spinner" class="spinner-overlay" ></div>
     </body>
 </html>

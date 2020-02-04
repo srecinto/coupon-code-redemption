@@ -177,7 +177,7 @@ class RedemptionCodeDB:
 
         return result, result_count
 
-    def get_pending_shipping_redemption_codes(self):
+    def get_pending_shipping_redemption_codes(self, rows_per_page, current_page):
         print("get_unused_redemption_codes()")
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
@@ -202,13 +202,25 @@ class RedemptionCodeDB:
                     ELSE 'SHIPPED'
                 END as "status"
             FROM redemption_code
-            WHERE "tracking" is null and "city" is not null and "firstName" is not null and "state" is not null order by "created";""")
+            WHERE "tracking" is null and "city" is not null and "firstName" is not null and "state" is not null order by "created"
+            LIMIT {rows_per_page} OFFSET {starting_row};""".format(
+            rows_per_page=rows_per_page,
+            starting_row=((current_page - 1) * rows_per_page) # Need to set an offset to get the right records
+        ))
 
         result = cur.fetchall()
+        
+        cur.execute("""select count(*) as result_count
+            FROM redemption_code
+            WHERE "tracking" is null and "city" is not null and "firstName" is not null and "state" is not null""")
+
+        result_count = cur.fetchone()["result_count"]
+
+        print("result_count: {0}".format(result_count))
 
         self.commit_close_connection(conn)
 
-        return result
+        return result, result_count
 
     def get_shipped_redemption_codes(self):
         print("get_unused_redemption_codes()")

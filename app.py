@@ -454,12 +454,14 @@ def pending_shipping_tab():
     """ handler for the admmin pendingshippingtab url path of the app """
     print("available_codes_tab()")
     redemption_code_db = RedemptionCodeDB()
+    
+    active_tab = 0
+    current_page = safe_cast(request.args.get("current_page"), int, 1)
+    rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
 
     message = ""
-    pending_shipping_items, total_rows = redemption_code_db.get_pending_shipping_redemption_codes()
-    paging_info = {
-        "total_rows": total_rows
-    }
+    pending_shipping_items, total_rows = redemption_code_db.get_pending_shipping_redemption_codes(rows_per_page, current_page)
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page, total_rows)
 
     response = make_response(
         render_template(

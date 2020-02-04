@@ -378,8 +378,14 @@ def code_file_upload():
             redemption_code_db.commit_close_connection(conn)
 
         redemption_code_db.batch_create_redemption_code(arg_list)
+        
+    
+    active_tab = safe_cast(request.args.get("tab"), int, 0)
+    current_page = safe_cast(request.args.get("current_page"), int, 1)
+    rows_per_page = safe_cast(request.args.get("rows_per_page"), int, config.app["default_rows_per_page"])
+    paging_info = get_paging_info(active_tab, current_page, rows_per_page)
 
-    response = make_response(render_template("admin.html", app_config=config.app, message=message))
+    response = make_response(render_template("admin.html", app_config=config.app, message=message, paging_info=paging_info))
 
     return response
 
